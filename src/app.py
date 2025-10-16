@@ -45,12 +45,6 @@ app.layout = dbc.Container([
     # Globe Section 
     dbc.Row([
         dbc.Col([
-            html.H2("GAIA-GX", style={'color': '#00ffaf', 'marginBottom': '20px'})
-        ])
-    ]),
-
-    dbc.Row([
-        dbc.Col([
             dbc.Card([
                 dbc.CardBody([
  
