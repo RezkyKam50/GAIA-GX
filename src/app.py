@@ -16,7 +16,7 @@ from utils.config.config import (
     NEAREST_NEIGHBORS, 
     MAX_SUGGESTIONS
 )
-import dash_bootstrap_components as dbc
+import dash_bootstrap_components as dbc, time
 
 from datetime import datetime, timedelta
 
@@ -35,7 +35,7 @@ app.layout = dbc.Container([
                     }
                 ),
                 html.H1(
-                "The Nutritionist Analytics Dashboard.",
+                "AI Powered Global Operational Intelligence Platform.",
                 className="company-text"
                 )
             ], className="app-title d-flex align-items-center justify-content-center my-4")
