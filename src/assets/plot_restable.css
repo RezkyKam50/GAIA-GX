@@ -1,0 +1,163 @@
+/* Plotly figure container styling */
+#main-plot {
+  border-radius: 16px;
+  overflow: hidden; /* keeps corners clean */
+  box-shadow: 0 0 20px rgba(0, 255, 175, 0.15);
+  background-color: rgba(42, 50, 56, 0.9);
+  padding: 6px;
+}
+
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+#main-plot:hover {
+  background: linear-gradient(
+    10deg,
+    #23635d34 0%,
+    #0000007a 25%,
+    #23635d34 50%,
+    #0000007a 75%,
+    #23635d34 100%
+  );
+  background-size: 500% 500%;
+  animation: gradientShift 10s ease-in-out infinite;
+  border-color: #00ffaf;
+  box-shadow: 0 0 20px rgba(0, 255, 175, 0.3);
+  transition: opacity 0.8s ease;
+}
+
+/* Make legend blend better with dark theme */
+.js-plotly-plot .legend {
+  border: none !important;
+  background: transparent !important;
+  border-radius: 12px !important;
+}
+
+/* Results table and text styling */
+#results-table {
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #0a0a0a;
+}
+
+/* Optional hover effect */
+#main-plot:hover {
+  box-shadow: 0 0 25px rgb(0, 255, 174);
+  transition: box-shadow 0.1s ease-in-out;
+}
+
+
+/* === Results Section (Matching Neon Theme) === */
+
+/* Results container styling */
+.results-container {
+    color: #00ffaf;
+    padding: 20px;
+    border-radius: 8px;
+    background: rgba(42, 50, 56, 0.8);
+}
+
+/* Neon title styling */
+.neon-title {
+    color: #00ffaf;
+    font-weight: thin;
+    text-shadow: 0 0 2px #00ffaf, 0 0 10px #00ffaf;
+    animation: glow 2s ease-in-out infinite alternate;
+    margin-bottom: 8px;
+}
+
+/* Neon subtitle styling */
+.neon-subtitle {
+    color: #00ffaf;
+    animation: pulse 3s ease-in-out infinite;
+    margin-bottom: 10px;
+    text-shadow: 0 0 2px #00ffaf, 0 0 10px #00ffaf;
+}
+
+/* Animations */
+@keyframes glow {
+    from {
+        text-shadow: 0 0 2px #00ffaf, 0 0 10px #00ffaf;
+    }
+    to {
+        text-shadow: 0 0 5px #00ffaf, 0 0 15px #00ffaf, 0 0 20px #00ff9d;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.results-container:hover {
+  box-shadow: 0 0 25px rgba(0, 255, 175, 0.3);
+}
+
+/* Title & Subtitle */
+.results-title {
+  color: #00ffaf !important;
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(0, 255, 175, 0.4);
+  margin-bottom: 8px;
+}
+
+.results-subtitle {
+  color: #00ffaf !important;
+  opacity: 0.8;
+  margin-bottom: 16px;
+}
+
+/* Table styling */
+.results-table {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #fbff000c;
+  color: #575757 !important;
+  box-shadow: 0 0 15px rgba(0, 255, 175, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+/* Table hover glow */
+.results-table:hover {
+  box-shadow: 0 0 20px rgba(0, 255, 175, 0.25);
+}
+
+/* Table headers and rows */
+.results-table thead {
+  background-color: #3A4249;
+  color: #00ffaf;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.results-table tbody tr {
+  background-color: #0a0a0a;
+  border-bottom: 1px solid rgba(0, 255, 175, 0.2);
+}
+
+.results-table tbody tr:hover {
+  background-color: rgba(0, 255, 175, 0.1);
+  color: #ffffff;
+  text-shadow: 0 0 2px #ffffff, 0 0 10px #ffffff;
+  transition: background-color 0.2s ease;
+}
+
+/* Table borders cleanup */
+.results-table td,
+.results-table th {
+  border: none !important;
+}
