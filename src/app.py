@@ -28,7 +28,7 @@ app.layout = dbc.Container([
         dbc.Col([
             html.Div([
                 html.Img(
-                    src="/assets/Logo.png",
+                    src="/assets/GAIA.png",
                     style={
                         "height": "100px",
                         "marginRight": "15px"
