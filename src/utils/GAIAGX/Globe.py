@@ -11,32 +11,35 @@ from dash import (
     clientside_callback,
     ctx
 )
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-from utils.GAIAGX.weather import get_major_cities_weather
-from utils.GAIAGX.population import fetch_live_population_data, fetch_rss_feeds
-from utils.GAIAGX.seismic import recent_events
-from utils.GAIAGX.tide import fetch_tide_stations
+import plotly.graph_objects as go, pandas, cudf
+from events.weather import get_major_cities_weather
+from events.population import fetch_live_population_data, fetch_rss_feeds
+from events.seismic import recent_events
+from events.tide import fetch_tide_stations
 
 
 @callback(
     Output('earth-globe', 'figure'),
-    [Input('region-selector', 'value'),
-     Input('globe-mode', 'value')]
+    Input('news-data-store', 'data'),  # Trigger on initial data load
+    prevent_initial_call=False
 )
-def update_base_globe(region, mode):
+def update_base_globe(news_data):
     population_data = fetch_live_population_data()
     significant_countries = {k: v for k, v in population_data.items() if v > 5}
     countries = list(significant_countries.keys())
     populations = list(significant_countries.values())
     
-    df_globe = pd.DataFrame({
-        'country': countries,
-        'population': populations,
-        'hover_text': [f"{c}: {p:,.1f} million people" for c, p in zip(countries, populations)]
+    # Use cuDF instead of pandas for GPU acceleration
+    df_globe = cudf.DataFrame({
+        'country': list(significant_countries.keys()),
+        'population': list(significant_countries.values())
     })
     
+    df_globe['hover_text'] = df_globe['country'] + ': ' + df_globe['population'].astype('str') + ' million people'
+    
+    # Convert back to pandas for Plotly compatibility if needed
+    df_globe = df_globe.to_pandas()
+
     fig = go.Figure(data=go.Choropleth(
         locations=df_globe['country'],
         z=df_globe['population'],
@@ -53,32 +56,20 @@ def update_base_globe(region, mode):
         hoverinfo='text'
     ))
 
-    projection_map = {
-        'geo': 'equirectangular',
-        'ortho': 'orthographic',
-        'natural': 'natural earth'
-    }
-
-    region_coords = {
-        'NA': {'lat': 40, 'lon': -100},
-        'SA': {'lat': -15, 'lon': -60},
-        'EU': {'lat': 50, 'lon': 10},
-        'AF': {'lat': 0, 'lon': 20},
-        'AS': {'lat': 30, 'lon': 100},
-        'OC': {'lat': -25, 'lon': 135}
-    }
-    
-    coords = region_coords.get(region, {'lat': 0, 'lon': 0})
-
     fig.update_geos(
-        projection_type=projection_map.get(mode, 'natural earth'),
+        projection_type='natural earth',
         showland=True,
         landcolor='#2A3238',
         oceancolor='#1a1f24',
         showocean=True,
         showcountries=False,
-        projection_rotation=dict(lon=coords['lon'], lat=coords['lat']),
-        bgcolor='rgba(0,0,0,0)'
+        showcoastlines=True,
+        coastlinecolor='#00ffaf',
+        coastlinewidth=1,
+        showframe=False,
+        projection_rotation=dict(lon=0, lat=0),  # Default center
+        bgcolor='rgba(0,0,0,0)',
+        resolution=50
     )
     
     fig.update_layout(
@@ -94,17 +85,41 @@ def update_base_globe(region, mode):
             yanchor='top',
             bgcolor='rgba(26, 31, 36, 0.8)',
             font=dict(color='#00ffaf')
+        ),
+        uirevision='constant',
+        hovermode='closest',
+        # Configure drag interactions - moved from update_geos
+        dragmode=False,  # Disable default drag behavior
+        # For geo plots, we need to use specific geo configuration
+        geo=dict(
+            # Lock the view to prevent vertical movement
+            center=dict(lat=0, lon=0),
+            projection_rotation=dict(lon=0, lat=0, roll=0),
+            # Disable user interaction that would allow vertical movement
+            # This is achieved by not enabling any drag modes that allow tilt
         )
+    )
+    
+    # Add custom configuration to restrict movement
+    fig.update_layout(
+        # Disable the ability to tilt/rotate vertically
+        scene=dict(
+            camera=dict(
+                up=dict(x=0, y=0, z=1),
+                eye=dict(x=0, y=0, z=1.5),
+                projection=dict(type="orthographic")
+            )
+        ) if 'scene' in fig.to_dict() else {}
     )
     
     return fig
 
 @callback(
     Output('news-data-store', 'data'),
-    Input('region-selector', 'value'),
+    Input('earth-globe', 'id'),  # Trigger on initial load
     prevent_initial_call=False
 )
-def fetch_news_data(region):
+def fetch_news_data(globe_id):
     try:
         rss_data = fetch_rss_feeds()
         if rss_data:
@@ -128,10 +143,10 @@ def fetch_news_data(region):
 
 @callback(
     Output('weather-data-store', 'data'),
-    Input('region-selector', 'value'),
+    Input('earth-globe', 'id'),  # Trigger on initial load
     prevent_initial_call=False
 )
-def fetch_weather_data(region):
+def fetch_weather_data(globe_id):
     try:
         cities_weather = get_major_cities_weather()
         if cities_weather:
@@ -153,10 +168,10 @@ def fetch_weather_data(region):
 
 @callback(
     Output('earthquake-data-store', 'data'),
-    Input('region-selector', 'value'),
+    Input('earth-globe', 'id'),  # Trigger on initial load
     prevent_initial_call=False
 )
-def fetch_earthquake_data(region):
+def fetch_earthquake_data(globe_id):
     try:
         if recent_events:
             return {
@@ -176,10 +191,10 @@ def fetch_earthquake_data(region):
 
 @callback(
     Output('tide-data-store', 'data'),
-    Input('region-selector', 'value'),
+    Input('earth-globe', 'id'),  # Trigger on initial load
     prevent_initial_call=False
 )
-def fetch_tide_data(region):
+def fetch_tide_data(globe_id):
     try:
         tide_stations = fetch_tide_stations(max_stations=50)
         if tide_stations:
@@ -203,13 +218,10 @@ def fetch_tide_data(region):
      Input('weather-data-store', 'data'),
      Input('earthquake-data-store', 'data'),
      Input('tide-data-store', 'data')],
-    [State('earth-globe', 'figure'),
-     State('region-selector', 'value'),
-     State('globe-mode', 'value')],
+    State('earth-globe', 'figure'),
     prevent_initial_call=True
 )
-def add_data_layers(news_data, weather_data, earthquake_data, tide_data, 
-                    current_fig, region, mode):
+def add_data_layers(news_data, weather_data, earthquake_data, tide_data, current_fig):
     if current_fig is None:
         return current_fig
     
@@ -288,3 +300,4 @@ def add_data_layers(news_data, weather_data, earthquake_data, tide_data,
         ))
     
     return fig
+ 
